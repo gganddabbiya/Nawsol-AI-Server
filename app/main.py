@@ -2,27 +2,38 @@ import os
 
 from dotenv import load_dotenv
 
+load_dotenv()
+
+from product.adapter.input.web.product_data_router.product_data_router import product_data_router
 from account.adapter.input.web.account_router import account_router
 from config.database.session import Base, engine
 from documents_multi_agents.adapter.input.web.document_multi_agent_router import documents_multi_agents_router
 from ecos.adapter.input.web.ecos_data_router.ecos_data_router import ecos_data_router
 from ieinfo.adapter.input.web.ie_info_router import ie_info_router
 from kftc.adapter.input.web.kftc_router import kftc_router
-from market_data.adapter.input.web.market_data_router import market_data_router
 from sosial_oauth.adapter.input.web.google_oauth2_router import authentication_router
+from jobs import scheduler as jobs_scheduler
 
 # ORM 모델들을 Base.metadata에 등록하기 위해 import, TODO: 기능 개발 후 삭제
 from ieinfo.infrastructure.orm.ie_info import IEInfo
 from product.infrastructure.orm.product_bond import ProductBondORM
-from product.infrastructure.orm.product_etf import ProductETFORM
 from product.infrastructure.orm.product_fund import ProductFundORM
+from finance.infrastructure.orm.finance_orm import FinanceORM
 
-load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def on_startup():
+    # .env가 이미 로드되어 있다고 가정
+    jobs_scheduler.start_scheduler()
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    jobs_scheduler.stop_scheduler()
 
 origins = [
     "http://localhost:3000",  # Next.js 프론트 엔드 URL
@@ -43,7 +54,7 @@ app.include_router(documents_multi_agents_router, prefix="/flow")  # 프론트�
 app.include_router(kftc_router, prefix="/kftc")
 app.include_router(ecos_data_router, prefix="/ecos")
 app.include_router(ie_info_router, prefix="/ie_info")
-app.include_router(market_data_router, prefix="/market-data")
+app.include_router(product_data_router, prefix="/product")
 # 앱 실행
 
 if __name__ == "__main__":
@@ -53,4 +64,3 @@ if __name__ == "__main__":
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     uvicorn.run(app, host=host, port=port)
-
