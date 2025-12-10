@@ -1,7 +1,4 @@
-from fastapi import APIRouter, Depends
-from datetime import datetime
-from account.adapter.input.web.session_helper import get_current_user
-from recommendation.application.usecase.etf_recommendation_usecase import ETFRecommendationUseCase
+from fastapi import APIRouter
 from product.application.factory.fetch_product_data_usecase_factory import FetchProductDataUsecaseFactory
 from util.log.log import Log
 
